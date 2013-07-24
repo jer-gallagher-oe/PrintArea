@@ -21,7 +21,9 @@
  *  @popY     | [number]  | (500)                  | popup window screen Y position
  *  @popTitle | [string]  | ('')                   | popup window title element
  *  @popClose | [boolean] | (false),true           | popup window close after printing
+ *  @html5    | [boolean] | (undefined),true,false | html 5 document standard (only for popup option)
  *  @strict   | [boolean] | (undefined),true,false | strict or loose(Transitional) html 4.01 document standard or undefined to not include at all (only for popup option)
+ *  @ieEdge   | [boolean] | (undefined),true,false | to force IE to ignore compatibility mode
  *  @extraCss | [string]  | ("")                   | comma separated list of extra css to include
  */
 (function($) {
@@ -77,22 +79,35 @@
 
     function docType()
     {
-        if ( settings.mode == modes.iframe || !settings.strict ) return "";
-
-        var standard = settings.strict == false ? " Trasitional" : "";
-        var dtd = settings.strict == false ? "loose" : "strict";
-
-        return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01' + standard + '//EN" "http://www.w3.org/TR/html4/' + dtd +  '.dtd">';
+        if (settings.mode == modes.iframe) return "";
+        /* Added HTML 5 support */
+        if (settings.html5) {
+            return '<!DOCTYPE HTML>';
+        } else {
+            if (!settings.strict) return "";
+            var standard = settings.strict == false ? " Trasitional" : "";
+            var dtd = settings.strict == false ? "loose" : "strict";
+            return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01' + standard + '//EN" "http://www.w3.org/TR/html4/' + dtd + '.dtd">';
+        }
     }
 
     function getHead()
     {
         var head = "<head><title>" + settings.popTitle + "</title>";
+        /* To support that IE does NOT print svg in compatibility mode */
+        if (settings.ieEdge) {
+            head = "<head><meta charset='utf-8' /><meta http-equiv='X-UA-Compatible' content='IE=edge'/><title>" + settings.popTitle + "</title>";
+        }
         $(document).find("link")
             .filter(function(){ return $(this).attr("rel").toLowerCase() == "stylesheet"; })
             .filter(function(){
                     var media = $(this).attr("media");
-                    return (media == undefined || media.toLowerCase() == "" || media.toLowerCase() == "print" || media.toLowerCase() == "all")
+                    // mod by jer gallagher to support non-media css
+                    if (media) {
+                        return (media == undefined || media.toLowerCase() == "" || media.toLowerCase() == "print" || media.toLowerCase() == "all")
+                    } else {
+                        return "";
+                    }
                 })
             .each(function(){
                     head += '<link type="text/css" rel="stylesheet" href="' + $(this).attr("href") + '" >';
