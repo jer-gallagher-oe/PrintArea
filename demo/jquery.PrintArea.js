@@ -73,11 +73,16 @@
             writeDoc.write( docType() + "<html>" + getHead() + getBody( $(this) ) + "</html>" );
             writeDoc.close();
 
-            printWindow.focus();
-            printWindow.print();
+            $(writeDoc).ready(function () {
+                printWindow.focus();
+                printWindow.print();
+    
+                if (settings.mode == modes.popup && settings.popClose) {
+                    setTimeout(function () { printWindow.close(); }, 2000);
+                }
+    
+            });
 
-            if ( settings.mode == modes.popup && settings.popClose )
-                printWindow.close();
         }
 
     function docType()
